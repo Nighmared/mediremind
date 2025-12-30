@@ -68,7 +68,6 @@ class DailyReminder implements Reminder<DailyReminder> {
     if (numTimes > 0 && numTimes < timesTaken) {
       return null;
     }
-    //XXX implement this/rethink how to do this
     return DateTime.now();
   }
 
@@ -275,7 +274,7 @@ class Med {
     required String dosage,
     required num numLeft,
     required List<RefillReminder> refillReminders,
-    required List<(int hour, int minute, String remId)> dailyRemindersRaw,
+    required Iterable<(int hour, int minute, String remId)> dailyRemindersRaw,
     num amountPerTake = 1.0,
   }) {
     String newMedId = uuid.v4();

@@ -2,15 +2,181 @@ import 'package:mediremind/data/types.dart';
 import 'package:mediremind/meds.dart';
 import 'package:flutter/material.dart';
 
+/* Future<void> _showDeleteDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Delete Medication"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _delMed();
+                Navigator.pop(context);
+              },
+              child: Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Cancel"),
+            ),
+          ],
+        );
+      },
+    );
+  }*/
+class _DailyReminderView extends StatelessWidget {
+  final int hour;
+  final int minute;
+  final String remId;
+  final _MediConfigState mcs;
+  final Function() rebuildParent;
+
+  const _DailyReminderView(
+    this.hour,
+    this.minute,
+    this.remId,
+    this.mcs,
+    this.rebuildParent,
+  );
+
+  void _doSave(TimeOfDay time) {
+    mcs.dailyReminders.remove((hour, minute, remId));
+    mcs.dailyReminders.add((time.hour, time.minute, remId));
+    rebuildParent();
+  }
+
+  void _doDelete() {
+    mcs.dailyReminders.remove((hour, minute, remId));
+    rebuildParent();
+  }
+
+  Future<void> _showReminderConfig(
+    BuildContext context, [
+    bool isCreation = false,
+  ]) async {
+    var titleText = "Change daily reminder";
+    if (isCreation) {
+      titleText = "Add daily reminder";
+    }
+
+    TimeOfDay? newTime = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TimePickerDialog(
+          helpText: titleText,
+          initialTime: TimeOfDay(hour: hour, minute: minute),
+        );
+      },
+    );
+    if (newTime == null) {
+      return;
+    }
+    _doSave(newTime);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        "Daily at ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}",
+      ),
+      subtitle: Text("Reminder ID:$remId"),
+      onTap: () => _showReminderConfig(context),
+      trailing: IconButton(
+        onPressed: _doDelete,
+        icon: Icon(Icons.delete_forever),
+      ),
+    );
+  }
+}
+
+class _RefillReminderView extends StatelessWidget {
+  final int rem;
+  final _MediConfigState mcs;
+  final Function() rebuildParent;
+  final TextEditingController remControl = TextEditingController();
+  final bool isCreate;
+  _RefillReminderView(
+    this.mcs,
+    this.rem,
+    this.rebuildParent, [
+    this.isCreate = false,
+  ]);
+  void _doSave(BuildContext context) {
+    if (!isCreate) {
+      mcs.refillReminders.remove(rem);
+    }
+    mcs.refillReminders.add(int.parse(remControl.text));
+    rebuildParent();
+    Navigator.pop(context);
+  }
+
+  void _deleteReminder(BuildContext context) {
+    mcs.refillReminders.remove(rem);
+    rebuildParent();
+  }
+
+  Future<void> _showRefillReminderConfig(
+    BuildContext context, {
+    bool isCreate = false,
+  }) {
+    var titleText = "Change refill reminder";
+    if (isCreate) {
+      titleText = "Set new refill reminder";
+    }
+    remControl.text = rem.toString();
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(titleText),
+          content: TextField(
+            decoration: InputDecoration(
+              label: Text("Remind me when _ meds left:"),
+            ),
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            controller: remControl,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            TextButton(onPressed: () => _doSave(context), child: Text("Save")),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text("Remind when $rem meds left"),
+      onTap: () => _showRefillReminderConfig(context),
+      trailing: IconButton(
+        onPressed: () => _deleteReminder(context),
+        icon: Icon(Icons.delete),
+      ),
+    );
+  }
+}
+
 class _MediConfigState extends State<MediConfig> {
   Med _getMedInstance() {
     return widget.man.getMedFromId(widget.mediID);
   }
 
+  bool initialized = false;
   final nameControl = TextEditingController();
   final doseControl = TextEditingController();
   final amountControl = TextEditingController();
-  final List<(int, int, String)> dailyreminders = [];
+  final Set<(int, int, String)> dailyReminders = {};
+  final Set<int> refillReminders = {};
   num amountPerTakeInput = 0;
 
   void _doSave() {
@@ -21,8 +187,8 @@ class _MediConfigState extends State<MediConfig> {
           numLeft: num.parse(amountControl.text),
           dosage: doseControl.text,
           amountPerTake: amountPerTakeInput,
-          refillReminders: [],
-          dailyRemindersRaw: dailyreminders,
+          refillReminders: refillReminders.map(RefillReminder.new).toList(),
+          dailyRemindersRaw: dailyReminders,
         ),
       );
     } else {
@@ -32,7 +198,8 @@ class _MediConfigState extends State<MediConfig> {
         name: nameControl.text,
         numLeft: double.parse(amountControl.text),
         amountPerTake: amountPerTakeInput,
-        dailyRemindersRaw: dailyreminders,
+        dailyRemindersRaw: dailyReminders,
+        refillReminders: refillReminders.map(RefillReminder.new).toList(),
       );
     }
     widget.onSaveDone();
@@ -43,24 +210,34 @@ class _MediConfigState extends State<MediConfig> {
     var lastTaken = "never";
     var headText = "";
     if (widget.isCreation) {
-      headText = "Creating new Med";
-      nameControl.text = "";
-      doseControl.text = "";
-      amountControl.text = "";
-      amountPerTakeInput = 1.0;
+      if (!initialized) {
+        headText = "Creating new Med";
+        nameControl.text = "";
+        doseControl.text = "";
+        amountControl.text = "";
+        amountPerTakeInput = 1.0;
+        dailyReminders.clear();
+        refillReminders.clear();
+        initialized = true;
+      }
     } else {
-      var inst = _getMedInstance();
-      headText = "Settings for ${inst.name} ${inst.dosage}";
-      nameControl.text = inst.name;
-      doseControl.text = inst.dosage;
-      amountControl.text = inst.numLeft.toString();
-      amountPerTakeInput = inst.amountPerTake;
-      dailyreminders.clear();
-      dailyreminders.addAll(
-        inst.dailyReminders.map((r) => (r.hour, r.minute, r.id)),
-      );
-      if (inst.takes.isNotEmpty) {
-        lastTaken = inst.takes.last.date.toString();
+      if (!initialized) {
+        var inst = _getMedInstance();
+        headText = "Settings for ${inst.name} ${inst.dosage}";
+        nameControl.text = inst.name;
+        doseControl.text = inst.dosage;
+        amountControl.text = inst.numLeft.toString();
+        amountPerTakeInput = inst.amountPerTake;
+        dailyReminders.clear();
+        dailyReminders.addAll(
+          inst.dailyReminders.map((r) => (r.hour, r.minute, r.id)),
+        );
+        refillReminders.clear();
+        refillReminders.addAll(inst.refillReminders.map((r) => r.remindAtLeft));
+        if (inst.takes.isNotEmpty) {
+          lastTaken = inst.takes.last.date.toString();
+        }
+        initialized = true;
       }
     }
 
@@ -72,58 +249,121 @@ class _MediConfigState extends State<MediConfig> {
     return Padding(
       padding: EdgeInsets.all(20),
       child: Column(
-        children: [
-          Text(headText, style: Theme.of(context).textTheme.headlineMedium),
-          TextField(
-            controller: nameControl,
-            decoration: InputDecoration(labelText: "Name"),
-          ),
-          TextField(
-            controller: doseControl,
-            decoration: InputDecoration(labelText: "Dosage"),
-          ),
-          TextField(
-            controller: amountControl,
-            decoration: InputDecoration(labelText: "# Left"),
-            keyboardType: TextInputType.numberWithOptions(
-              signed: false,
-              decimal: true,
-            ),
-          ),
-          Divider(),
-          Row(
-            children: [
-              Text("Amount per Take: "),
-              Spacer(),
-              DropdownMenu<num>(
-                dropdownMenuEntries: numPerTakeOptions,
-                initialSelection: amountPerTakeInput,
-                onSelected: (value) {
-                  amountPerTakeInput = value!;
-                },
+        children:
+            [
+              Text(headText, style: Theme.of(context).textTheme.headlineMedium),
+              TextField(
+                controller: nameControl,
+                decoration: InputDecoration(labelText: "Name"),
               ),
-            ],
-          ),
-          Divider(),
-          Text("Reminders"),
-          Spacer(),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              "Last Taken: $lastTaken",
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
+              TextField(
+                controller: doseControl,
+                decoration: InputDecoration(labelText: "Dosage"),
+              ),
+              TextField(
+                controller: amountControl,
+                decoration: InputDecoration(labelText: "# Left"),
+                keyboardType: TextInputType.numberWithOptions(
+                  signed: false,
+                  decimal: true,
+                ),
+              ),
+              Divider(),
+              Row(
+                children: [
+                  Text("Amount per Take: "),
+                  Spacer(),
+                  DropdownMenu<num>(
+                    dropdownMenuEntries: numPerTakeOptions,
+                    initialSelection: amountPerTakeInput,
+                    onSelected: (value) {
+                      amountPerTakeInput = value!;
+                    },
+                  ),
+                ],
+              ),
+              Divider(),
+              Text("Reminders", style: Theme.of(context).textTheme.titleLarge),
+              Divider(),
+              Text(
+                "Medication Reminders",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ] +
+            <Widget>[] +
+            dailyReminders
+                .map(
+                  (dr) => _DailyReminderView(
+                    dr.$1,
+                    dr.$2,
+                    dr.$3,
+                    this,
+                    () => setState(() {}),
+                  ),
+                )
+                .toList() +
+            [
+              ListTile(
+                tileColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.circular(20),
+                ),
+                trailing: Icon(Icons.add),
+                title: Text("Add a medication reminder"),
+                onTap: () => _DailyReminderView(
+                  10,
+                  10,
+                  uuid.v4(),
+                  this,
+                  () => setState(() {}),
+                )._showReminderConfig(context, true),
+              ),
 
-          Divider(),
-          FloatingActionButton(
-            onPressed: () {
-              _doSave();
-              Navigator.pop(context);
-            },
-            child: Icon(Icons.save),
-          ),
-        ],
+              Divider(),
+              Text(
+                "Refill Reminders",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ] +
+            <Widget>[] +
+            refillReminders
+                .map((r) => _RefillReminderView(this, r, () => setState(() {})))
+                .toList() +
+            [
+              ListTile(
+                tileColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.circular(20),
+                ),
+                trailing: Icon(Icons.add),
+                title: Text("Add a refill reminder"),
+                onTap: () => _RefillReminderView(
+                  this,
+                  10,
+                  () => setState(() {}),
+                  true,
+                )._showRefillReminderConfig(context, isCreate: true),
+              ),
+
+              Divider(),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  "Last Taken: $lastTaken",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+
+              Divider(),
+              FloatingActionButton(
+                onPressed: () {
+                  _doSave();
+                  Navigator.pop(context);
+                },
+                child: Icon(Icons.save),
+              ),
+              Spacer(),
+            ],
       ),
     );
   }

@@ -85,7 +85,7 @@ class MedsManager {
     String? dosage,
     double? numLeft,
     num? amountPerTake,
-    List<(int hour, int minute, String remId)> dailyRemindersRaw = const [],
+    Iterable<(int hour, int minute, String remId)> dailyRemindersRaw = const [],
     List<Refill>? refills,
     List<RefillReminder>? refillReminders,
     List<Take>? takes,

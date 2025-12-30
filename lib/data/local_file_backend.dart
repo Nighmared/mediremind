@@ -45,7 +45,6 @@ class LocalFileBackend implements StorageBackend {
     if (fileContent.isEmpty) {
       return [];
     }
-    print(fileContent);
     final ms = MedSerializer();
     final List<Map<String, dynamic>> parsed = List<Map<String, dynamic>>.from(
       jsonDecode(fileContent),
@@ -61,9 +60,6 @@ class LocalFileBackend implements StorageBackend {
       meds.map(ms.toJson).toList(),
       toEncodable: (v) => v,
     );
-    print("ayyyoo");
-    _writeFile(fileString).then((v) => print("hello"));
-
-    // TODO: implement writeMeds
+    _writeFile(fileString);
   }
 }

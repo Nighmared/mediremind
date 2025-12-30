@@ -49,15 +49,7 @@ class SettingsUi extends StatelessWidget {
           ),
           Divider(),
           Text("Debugging", style: Theme.of(context).textTheme.headlineSmall),
-          TextButton(
-            onPressed: () => print(
-              jsonEncode(
-                MedSerializer().toJson(man.getMeds()[0]),
-                toEncodable: (v) => v,
-              ),
-            ),
-            child: Text("print a med hehe"),
-          ),
+
           TextButton(
             onPressed: () {
               Med m = man.getMeds()[0];
