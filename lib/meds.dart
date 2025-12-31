@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:mediremind/data/interfaces.dart';
 import 'package:mediremind/data/types.dart';
 import 'package:mediremind/notify.dart';
@@ -124,7 +125,6 @@ class MedsManager {
     for (var m in meds) {
       out.addAll(m.dailyReminders.where((rem) => rem.happensToday()));
     }
-    out.sort((a, b) => a.compareTo(b));
     return out;
   }
 }
