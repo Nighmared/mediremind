@@ -2,31 +2,6 @@ import 'package:mediremind/data/types.dart';
 import 'package:mediremind/meds.dart';
 import 'package:flutter/material.dart';
 
-/* Future<void> _showDeleteDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Delete Medication"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _delMed();
-                Navigator.pop(context);
-              },
-              child: Text("Delete", style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Cancel"),
-            ),
-          ],
-        );
-      },
-    );
-  }*/
 class _DailyReminderView extends StatelessWidget {
   final int hour;
   final int minute;
@@ -160,7 +135,7 @@ class _RefillReminderView extends StatelessWidget {
       onTap: () => _showRefillReminderConfig(context),
       trailing: IconButton(
         onPressed: () => _deleteReminder(context),
-        icon: Icon(Icons.delete),
+        icon: Icon(Icons.delete_forever),
       ),
     );
   }

@@ -52,7 +52,17 @@ class SettingsUi extends StatelessWidget {
 
           TextButton(
             onPressed: () {
-              Med m = man.getMeds()[0];
+              List<Med> meds = man.getMeds();
+              if (meds.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("No meds configured, nothing to serialize"),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              Med m = meds[0];
               MedSerializer ms = MedSerializer();
               var jsonObject = jsonEncode(ms.toJson(m), toEncodable: (v) => v);
               Med n = ms.fromJson(jsonDecode(jsonObject));

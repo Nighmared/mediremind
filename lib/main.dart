@@ -1,11 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:mediremind/UI/home_ui.dart';
 import 'package:mediremind/UI/med_ui.dart';
 import 'package:mediremind/data/generic_repo.dart';
 import 'package:mediremind/data/local_file_backend.dart';
-import 'package:mediremind/data/test_backend.dart';
 import 'package:mediremind/meds.dart';
 import 'package:mediremind/notify.dart';
 import 'package:mediremind/UI/settings_ui.dart';
@@ -26,7 +23,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Medi Remind',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.blueAccent)),
+      theme: ThemeData(
+        colorScheme: .fromSeed(seedColor: Colors.lightGreenAccent),
+      ),
       home: const HomePage(title: 'MediRemind'),
     );
   }
@@ -61,11 +60,12 @@ class _HomePageState extends State<HomePage> {
     man ??= MedsManager(GenericRepo(LocalFileBackend(), () => setState(() {})));
 
     return Scaffold(
-      floatingActionButton: IconButton(
+      floatingActionButton: FloatingActionButton(
+        tooltip: "Add Medication",
         onPressed: () => {
           MedUI.showConfig(context, "", man!, () => {setState(() => {})}, true),
         },
-        icon: Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
       appBar: AppBar(
         // TRY THIS: Try changing the color here to a specific color (to

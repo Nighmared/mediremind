@@ -45,8 +45,9 @@ class NotificationService {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
         "reminder_channel_id",
-        "medi reminder",
+        "Medication Reminder",
         channelDescription: "Recurring reminders to take medications",
+
         importance: Importance.max,
         styleInformation: DefaultStyleInformation(false, false),
       ),

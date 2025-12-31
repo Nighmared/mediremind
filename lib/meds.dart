@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:mediremind/data/interfaces.dart';
 import 'package:mediremind/data/types.dart';
 import 'package:mediremind/notify.dart';
 
 // logic here
 class MedsManager {
-  MedRepo _repo;
+  final MedRepo _repo;
 
   MedsManager(this._repo);
 
   void addMed(Med m) {
     _repo.addMed(m);
+    scheduleNotifications();
   }
 
   void deleteMed(Med m) {
@@ -50,7 +50,7 @@ class MedsManager {
 
   void takeMed(Reminder rem) {
     Med medi = _repo.getMed(rem.medID);
-    final newTakes = medi.takes;
+    final newTakes = List<Take>.of(medi.takes);
     newTakes.add(Take.now(medi.amountPerTake, rem.id));
     _repo.updateMed(
       medi.id,
@@ -61,6 +61,20 @@ class MedsManager {
       ),
     );
     checkRefillReminders();
+  }
+
+  void unTakeMed(Reminder rem, Take take) {
+    Med medi = _repo.getMed(rem.medID);
+    final newTakes = List.of(medi.takes);
+    newTakes.remove(take);
+    _repo.updateMed(
+      medi.id,
+      Med.of(
+        old: medi,
+        takes: newTakes,
+        numLeft: medi.numLeft + medi.amountPerTake,
+      ),
+    );
   }
 
   void _cleanupTakes(Med medi) {
@@ -106,6 +120,7 @@ class MedsManager {
       takes: takes,
     );
     _repo.updateMed(id, newMed);
+    scheduleNotifications();
   }
 
   void scheduleNotifications() {

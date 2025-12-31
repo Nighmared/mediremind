@@ -12,7 +12,7 @@ class HomeUi extends StatelessWidget {
         now.day == take.day);
   }
 
-  ListTile _ReminderToListTile(
+  ListTile _reminderToListTile(
     BuildContext ctxt,
     MedsManager man,
     Reminder rem,
@@ -35,7 +35,18 @@ class HomeUi extends StatelessWidget {
       child: Text("Take", style: TextStyle(color: Colors.blue)),
     );
     if (taken) {
-      trailing = Text("Already Taken", style: TextStyle(color: Colors.grey));
+      final matchingTake = matchTakes.first;
+      trailing = TextButton(
+        onPressed: () {
+          man.unTakeMed(rem, matchingTake);
+          (ctxt as Element).markNeedsBuild();
+        },
+        child: Text(
+          "Already Taken at ${matchingTake.date.hour.toString().padLeft(2, "0")}:${matchingTake.date.minute.toString().padLeft(2, "0")}\n Tap to undo",
+          style: TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
     }
 
     var nextTime = rem.nextTimeOfDay();
@@ -56,7 +67,7 @@ class HomeUi extends StatelessWidget {
 
     List<ListTile> reminderTiles = man
         .getTodayMedReminders()
-        .map((r) => _ReminderToListTile(context, man, r))
+        .map((r) => _reminderToListTile(context, man, r))
         .toList();
 
     return Padding(
