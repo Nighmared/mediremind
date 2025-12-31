@@ -41,7 +41,9 @@ class HomeUi extends StatelessWidget {
     var nextTime = rem.nextTimeOfDay();
 
     return ListTile(
-      title: Text("${nextTime.$1}:${nextTime.$2}\n${med.name} "),
+      title: Text(
+        "${nextTime.$1.toString().padLeft(2, "0")}:${nextTime.$2.toString().padLeft(2, "0")}\n${med.name} ",
+      ),
       subtitle: Text("Take ${med.amountPerTake} of ${med.name} ${med.dosage}"),
       trailing: trailing,
     );

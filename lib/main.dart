@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mediremind/UI/home_ui.dart';
 import 'package:mediremind/UI/med_ui.dart';
@@ -50,18 +52,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentDestination = 0;
-  MedsManager man;
+  MedsManager? man;
 
-  _HomePageState()
-    : _currentDestination = 0,
-      man = MedsManager(GenericRepo(LocalFileBackend()));
+  _HomePageState() : _currentDestination = 0;
 
   @override
   Widget build(BuildContext context) {
+    man ??= MedsManager(GenericRepo(LocalFileBackend(), () => setState(() {})));
+
     return Scaffold(
       floatingActionButton: IconButton(
         onPressed: () => {
-          MedUI.showConfig(context, "", man, () => {setState(() => {})}, true),
+          MedUI.showConfig(context, "", man!, () => {setState(() => {})}, true),
         },
         icon: Icon(Icons.add),
       ),
@@ -75,9 +77,9 @@ class _HomePageState extends State<HomePage> {
         title: Text(widget.title),
       ),
       body: [
-        HomeUi(man),
-        MedUI(man: man),
-        SettingsUi(man),
+        HomeUi(man!),
+        MedUI(man: man!),
+        SettingsUi(man!),
       ][_currentDestination],
 
       bottomNavigationBar: NavigationBar(

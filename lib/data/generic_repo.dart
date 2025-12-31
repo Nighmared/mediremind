@@ -7,13 +7,17 @@ class GenericRepo implements MedRepo {
 
   GenericRepo._internal(this._medsCache, this._backend);
 
-  factory GenericRepo(StorageBackend backend) {
+  factory GenericRepo(
+    StorageBackend backend, [
+    Function()? doneReadingCallback,
+  ]) {
     Map<String, Med> newCache = {};
     Future<List<Med>> futureMeds = backend.readMeds();
     futureMeds.then((meds) {
       for (var m in meds) {
         newCache[m.id] = m;
       }
+      doneReadingCallback?.call();
     });
     return GenericRepo._internal(newCache, backend);
   }
