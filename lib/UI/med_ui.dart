@@ -223,7 +223,7 @@ class _MediConfigState extends State<MediConfig> {
 
     return Padding(
       padding: EdgeInsets.all(20),
-      child: Column(
+      child: ListView(
         children:
             [
               Text(headText, style: Theme.of(context).textTheme.headlineMedium),
