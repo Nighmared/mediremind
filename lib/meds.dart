@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:mediremind/data/interfaces.dart';
 import 'package:mediremind/data/types.dart';
 import 'package:mediremind/notify.dart';
@@ -15,10 +17,15 @@ class MedsManager {
 
   void deleteMed(Med m) {
     _repo.delMed(m);
+    scheduleNotifications(); //don't want orphaned notifications :))
   }
 
   List<Med> getMeds() {
-    return _repo.getMeds();
+    try {
+      return _repo.getMeds();
+    } on NotReadyError {
+      return [];
+    }
   }
 
   void deleteMedFromId(String id) {
@@ -35,7 +42,7 @@ class MedsManager {
   }
 
   void checkRefillReminders() {
-    List<Med> meds = _repo.getMeds();
+    List<Med> meds = getMeds();
     for (var m in meds) {
       for (var r in m.refillReminders) {
         if (m.numLeft <= r.remindAtLeft) {
@@ -89,7 +96,7 @@ class MedsManager {
   }
 
   void cleanupTakes() {
-    for (var m in _repo.getMeds()) {
+    for (var m in getMeds()) {
       _cleanupTakes(m);
     }
   }
@@ -125,7 +132,7 @@ class MedsManager {
 
   void scheduleNotifications() {
     NotificationService().resetAll();
-    List<Med> meds = _repo.getMeds();
+    List<Med> meds = getMeds();
     for (var m in meds) {
       for (var r in m.dailyReminders) {
         r.scheduleNotif(m);
@@ -135,11 +142,20 @@ class MedsManager {
 
   List<Reminder> getTodayMedReminders() {
     //returns ordered list of all reminders happening today
-    List<Med> meds = _repo.getMeds();
+    List<Med> meds = getMeds();
     List<Reminder> out = [];
     for (var m in meds) {
       out.addAll(m.dailyReminders.where((rem) => rem.happensToday()));
     }
     return out;
+  }
+
+  String exportState() {
+    final as = AppStateSerializer();
+    return jsonEncode(as.toJson(_repo.getState()), toEncodable: (v) => v);
+  }
+
+  void importState(String raw) {
+    _repo.writeState(AppStateSerializer().fromJson(jsonDecode(raw)));
   }
 }

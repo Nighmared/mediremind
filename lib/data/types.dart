@@ -303,3 +303,62 @@ class Med {
     return false;
   }
 }
+
+enum AppVersion { v1 }
+
+AppVersion parseAppVersion(String vs) {
+  return AppVersion.values.firstWhere((e) => e.name == vs);
+}
+
+class AppState {
+  static final AppVersion currentVersion = AppVersion.v1;
+  static final String versionKey = "VERSION";
+  static final String medsKey = "meds";
+  final AppVersion version;
+  final List<Med> meds;
+  const AppState(this.version, this.meds);
+}
+
+class AppStateSerializer implements Serializer<AppState> {
+  @override
+  AppState fromJson(Map<String, dynamic> json) {
+    final ms = MedSerializer();
+    if (json[AppState.versionKey] == null) {
+      //means storage format of first version
+      final ms = MedSerializer();
+      List<Med> meds = _parseListOfJsonObjects(
+        List<Map<String, dynamic>>.from(json as List),
+        ms,
+      );
+      return AppState(AppVersion.v1, meds);
+    }
+    final version = parseAppVersion(json[AppState.versionKey]);
+    final List<Med> meds = _parseListOfJsonObjects(json[AppState.medsKey], ms);
+
+    return AppState(version, meds);
+  }
+
+  AppState fromV0Json(List<Map<String, dynamic>> json) {
+    final meds = _parseListOfJsonObjects(json, MedSerializer());
+    return AppState(AppVersion.v1, meds);
+  }
+
+  AppState specialFromJson(dynamic json) {
+    if (json.runtimeType == List) {
+      //backward compatibility >.<
+      return fromV0Json(List<Map<String, dynamic>>.from(json));
+    }
+    return fromJson(Map<String, dynamic>.from(json));
+  }
+
+  @override
+  Map<String, dynamic> toJson(AppState o) {
+    var ms = MedSerializer();
+    return {
+      AppState.versionKey: o.version.name,
+      AppState.medsKey: o.meds.map(ms.toJson).toList(),
+    };
+  }
+}
+
+class NotReadyError extends Error {}

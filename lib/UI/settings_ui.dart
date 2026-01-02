@@ -5,6 +5,7 @@ import 'package:mediremind/data/local_file_backend.dart';
 import 'package:mediremind/data/types.dart';
 import 'package:mediremind/meds.dart';
 import 'package:mediremind/notify.dart';
+import 'package:flutter/services.dart';
 
 class SettingsUi extends StatelessWidget {
   final MedsManager man;
@@ -48,6 +49,63 @@ class SettingsUi extends StatelessWidget {
             child: Text("Send test Notification"),
           ),
           Divider(),
+          Text("Backup", style: Theme.of(context).textTheme.headlineSmall),
+
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: man.exportState()));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text("Copied!")));
+            },
+            child: Text("Copy Backup to Clipboard"),
+          ),
+          TextButton(
+            onPressed: () => {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  final controller = TextEditingController();
+                  return AlertDialog(
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          try {
+                            man.importState(controller.text);
+                            Navigator.of(context).pop();
+                          } on Exception {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Invalid backup, could not import",
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Text("Save"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text("Cancel"),
+                      ),
+                    ],
+                    content: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        label: Text("Paste previously exported backup"),
+                      ),
+                      minLines: 5,
+                      maxLines: 10,
+                      maxLength: 15000,
+                    ),
+                  );
+                },
+              ),
+            },
+            child: Text("Import Backup"),
+          ),
+          Divider(),
           Text("Debugging", style: Theme.of(context).textTheme.headlineSmall),
 
           TextButton(
@@ -74,9 +132,12 @@ class SettingsUi extends StatelessWidget {
             child: Text("Test json serialize/deserialize pipeline"),
           ),
           TextButton(
-            onPressed: () => LocalFileBackend().writeMeds(man.getMeds()),
+            onPressed: () => LocalFileBackend().writeAppState(
+              AppState(AppState.currentVersion, man.getMeds()),
+            ),
             child: Text("write meds to local file"),
           ),
+          Divider(),
         ],
       ),
     );

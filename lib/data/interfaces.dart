@@ -6,9 +6,11 @@ abstract class MedRepo {
   void updateMed(String key, Med med);
   void addMed(Med med);
   void delMed(Med med);
+  AppState getState();
+  void writeState(AppState newState);
 }
 
 abstract class StorageBackend {
-  void writeMeds(Iterable<Med> meds);
-  Future<List<Med>> readMeds();
+  void writeAppState(AppState as);
+  Future<AppState> readAppState();
 }

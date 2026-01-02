@@ -3,8 +3,8 @@ import 'package:uuid/uuid.dart';
 import 'types.dart';
 
 class TestBackend implements StorageBackend {
-  final List<Med> _meds;
-  TestBackend._internal(this._meds);
+  AppState _as;
+  TestBackend._internal(this._as);
   static final Uuid uuid = Uuid();
 
   factory TestBackend() {
@@ -24,19 +24,16 @@ class TestBackend implements StorageBackend {
         dailyRemindersRaw: [],
       ),
     ];
-    return TestBackend._internal(meds);
+    return TestBackend._internal(AppState(AppVersion.v1, meds));
   }
 
   @override
-  void writeMeds(Iterable<Med> meds) {
-    _meds.clear();
-    for (var m in meds) {
-      _meds.add(m);
-    }
+  void writeAppState(AppState as) {
+    _as = AppState(as.version, List.from(as.meds));
   }
 
   @override
-  Future<List<Med>> readMeds() {
-    return Future<List<Med>>.value(_meds);
+  Future<AppState> readAppState() {
+    return Future<AppState>.value(_as);
   }
 }

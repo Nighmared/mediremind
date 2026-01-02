@@ -40,26 +40,21 @@ class LocalFileBackend implements StorageBackend {
   }
 
   @override
-  Future<List<Med>> readMeds() async {
-    var fileContent = await _readFile();
+  Future<AppState> readAppState() async {
+    String fileContent = await _readFile();
     if (fileContent.isEmpty) {
-      return [];
+      return AppState(AppState.currentVersion, []);
     }
-    final ms = MedSerializer();
-    final List<Map<String, dynamic>> parsed = List<Map<String, dynamic>>.from(
-      jsonDecode(fileContent),
-    );
-    List<Med> meds = parsed.map(ms.fromJson).toList();
-    return meds;
+    final parsed = jsonDecode(fileContent);
+    final AppStateSerializer as = AppStateSerializer();
+
+    return as.specialFromJson(parsed);
   }
 
   @override
-  void writeMeds(Iterable<Med> meds) {
-    var ms = MedSerializer();
-    var fileString = jsonEncode(
-      meds.map(ms.toJson).toList(),
-      toEncodable: (v) => v,
-    );
+  void writeAppState(AppState as) {
+    var aSS = AppStateSerializer();
+    var fileString = jsonEncode(aSS.toJson(as), toEncodable: (v) => v);
     _writeFile(fileString);
   }
 }
