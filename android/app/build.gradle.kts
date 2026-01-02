@@ -39,6 +39,17 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            resValue(
+                type = "string",
+                name = "app_name",
+                value = "Mediremind")
+        }
+        debug{
+            applicationIdSuffix =  ".debug"
+            resValue(
+                type = "string",
+                name = "app_name",
+                value = "TEST-Mediremind")
         }
     }
 }

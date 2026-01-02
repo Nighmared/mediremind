@@ -330,14 +330,13 @@ class _MediConfigState extends State<MediConfig> {
               ),
 
               Divider(),
-              FloatingActionButton(
+              IconButton(
                 onPressed: () {
                   _doSave();
                   Navigator.pop(context);
                 },
-                child: Icon(Icons.save),
+                icon: Icon(Icons.save),
               ),
-              Spacer(),
             ],
       ),
     );
